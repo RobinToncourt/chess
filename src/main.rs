@@ -115,8 +115,8 @@ fn king_destinations(
     let min_file = pos.0.checked_sub(1).unwrap_or(0);
     let max_file = cmp::min(7, pos.0+1);
     let min_line = pos.1.checked_sub(1).unwrap_or(0);
-    let max_line = cmp::min(7, pos.0+1);
-
+    let max_line = cmp::min(7, pos.1+1);
+    
     for i in min_file..=max_file {
         for j in min_line..=max_line {
             let square_pos = Pos(i, j);
@@ -844,9 +844,10 @@ fn get_piece_position(
     pieces: &HashMap<Pos, &Piece>,
 ) -> Result<Pos, ChessError> {
     let mut result: Vec<Pos> = Vec::new();
-
+    
     for (pos, piece) in filtered_pieces {
         let destinations = piece.get_destinations(&pos, &pieces);
+        
         if destinations_contains_pos(&destinations, &chess_notation.dest) {
             if let Some(file) = chess_notation.origin_file {
                 if file == pos.0 {
@@ -987,27 +988,19 @@ fn line_to_usize(line: &str) -> Option<usize> {
     }
 }
 
-const PLAYS: &str = "Nc3
-f5
-e4
-fxe4
-Nxe4
-Nf6
-Nxf6
-gxf6
+const PLAYS_1: &str = "Nc3 f5
+e4 fxe4
+Nxe4 Nf6
+Nxf6 gxf6
 Qh5#";
 
-const PLAYS_2: &str = "Nf3
-a5
-e3
-Ra6
-Bxa6
-xa6
-0-0
-d5
-c3
-d4
-cxd4";
+const PLAYS_2: &str = "Nf3 a5
+e3 Ra6
+Bxa6 xa6
+0-0 d5
+c3 d4
+cxd4 Qd7
+Kh1 Kd8";
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -1035,8 +1028,11 @@ fn example(play: &str) {
             return;
         };
 
-        let _ = board.user_move(&chess_notation);
+        let res = board.user_move(&chess_notation);
         println!("{white}");
+        if res.is_err() {
+            println!("{res:?}");
+        }
         board.print();
 
         if let Some(black) = line_split.next() {
@@ -1045,8 +1041,11 @@ fn example(play: &str) {
                 return;
             };
 
-            let _ = board.user_move(&chess_notation);
+            let res = board.user_move(&chess_notation);
             println!("{black}");
+            if res.is_err() {
+                println!("{res:?}");
+            }
             board.print();
         }
     }
