@@ -574,7 +574,7 @@ impl Color {
         match self {
             Color::White => "<".to_owned(),
             Color::Black => "[".to_owned(),
-            Color::Mark => ' '.to_string(),
+            Color::Mark => " ".to_string(),
         }
     }
 
@@ -715,7 +715,7 @@ impl Board {
         result
     }
 
-    fn user_move(&mut self, user_move: &MoveType) {
+    fn user_move(&mut self, user_move: &MoveType) -> Result<(), ChessError> {
         let pieces_movement: Vec<Movement> = match user_move {
             MoveType::KingSideCastling =>
                 kingside_castling_movements(&self.playing),
@@ -731,13 +731,9 @@ impl Board {
                     Some(&self.playing),
                 );
 
-                let Ok(origin_pos) =
-                    get_piece_position(
+                let origin_pos = get_piece_position(
                         chess_notation, &filtered_pieces, &pieces
-                    ) else {
-
-                    panic!("No pieces can go there: {:?}", chess_notation);
-                };
+                    )?;
 
                 movements.push(Movement {
                     origin: origin_pos,
@@ -754,6 +750,8 @@ impl Board {
         }
 
         self.playing = Color::invert(&self.playing);
+        
+        Ok(())
     }
 
     fn mark_destinations(&mut self, pos: &Vec<Pos>) {
@@ -849,8 +847,6 @@ fn get_piece_position(
 
     for (pos, piece) in filtered_pieces {
         let destinations = piece.get_destinations(&pos, &pieces);
-        dbg!(&piece);
-        dbg!(&destinations);
         if destinations_contains_pos(&destinations, &chess_notation.dest) {
             if let Some(file) = chess_notation.origin_file {
                 if file == pos.0 {
@@ -1001,11 +997,58 @@ Nxf6
 gxf6
 Qh5#";
 
+const PLAYS_2: &str = "Nf3
+a5
+e3
+Ra6
+Bxa6
+xa6
+0-0
+d5
+c3
+d4
+cxd4";
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() > 1 {
         replay(&args[1]);
+    }
+    else {
+        example(PLAYS_2);
+    }
+}
+
+fn example(play: &str) {
+    println!("Replaying a chess game.");
+
+    let mut board = Board::new();
+    board.print();
+
+    for line in play.lines() {
+        let mut line_split = line.split_whitespace();
+        let white = line_split.next().unwrap();
+
+        let Ok(chess_notation) = parse_chess_notation(white) else {
+            println!("Invalid chess notation: {white}.");
+            return;
+        };
+
+        let _ = board.user_move(&chess_notation);
+        println!("{white}");
+        board.print();
+
+        if let Some(black) = line_split.next() {
+            let Ok(chess_notation) = parse_chess_notation(black) else {
+                println!("Invalid chess notation: {black}.");
+                return;
+            };
+
+            let _ = board.user_move(&chess_notation);
+            println!("{black}");
+            board.print();
+        }
     }
 }
 
@@ -1014,7 +1057,7 @@ fn replay(replay_file: &str) {
     println!("Opening replay file {}.", replay_file);
 
     let Ok(replay) = fs::read_to_string(replay_file) else {
-        println!("No such file.");
+        println!("{}", format!("No such file: {replay_file}"));
         return;
     };
 
@@ -1030,7 +1073,7 @@ fn replay(replay_file: &str) {
             return;
         };
 
-        board.user_move(&chess_notation);
+        let _ = board.user_move(&chess_notation);
         println!("{white}");
         board.print();
 
@@ -1040,13 +1083,11 @@ fn replay(replay_file: &str) {
                 return;
             };
 
-            board.user_move(&chess_notation);
+            let _ = board.user_move(&chess_notation);
             println!("{black}");
             board.print();
         }
     }
-
-    board.print();
 }
 
 fn mark_pawn_destinations() {
@@ -1103,7 +1144,6 @@ mod test_chess {
         assert!(!is_in_board(&outside));
     }
 }
-
 
 
 
