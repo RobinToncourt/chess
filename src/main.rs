@@ -721,26 +721,8 @@ impl Board {
                 kingside_castling_movements(&self.playing),
             MoveType::QueenSideCastling =>
                 queenside_castling_movements(&self.playing),
-            MoveType::PieceMove(chess_notation) => {
-                let mut movements: Vec<Movement> = Vec::new();
-
-                let pieces = self.get_pieces(None, None);
-
-                let filtered_pieces = self.get_pieces(
-                    Some(&chess_notation.piece_type),
-                    Some(&self.playing),
-                );
-
-                let origin_pos = get_piece_position(
-                        chess_notation, &filtered_pieces, &pieces
-                    )?;
-
-                movements.push(Movement {
-                    origin: origin_pos,
-                    destination: chess_notation.dest.clone(),
-                });
-                movements
-            },
+            MoveType::PieceMove(chess_notation) =>
+                piece_movements(&self, chess_notation)?,
         };
 
         for mv in pieces_movement {
@@ -837,6 +819,30 @@ fn queenside_castling_movements(color: &Color) -> Vec<Movement> {
         },
         _ => panic!("Invalid color."),
     }
+}
+
+fn piece_movements(
+    board: &Board, chess_notation: &ChessNotation
+) -> Result<Vec<Movement>, ChessError> {
+    let mut movements: Vec<Movement> = Vec::new();
+
+    let pieces = board.get_pieces(None, None);
+
+    let filtered_pieces = board.get_pieces(
+        Some(&chess_notation.piece_type),
+        Some(&board.playing),
+    );
+
+    let origin_pos = get_piece_position(
+            chess_notation, &filtered_pieces, &pieces
+        )?;
+
+    movements.push(Movement {
+        origin: origin_pos,
+        destination: chess_notation.dest.clone(),
+    });
+    
+    Ok(movements)
 }
 
 fn get_piece_position(
@@ -1009,7 +1015,7 @@ fn main() {
         replay(&args[1]);
     }
     else {
-        example(PLAYS_2);
+        example(PLAYS_1);
     }
 }
 
