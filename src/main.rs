@@ -728,6 +728,7 @@ impl Board {
         for mv in pieces_movement {
             let mut piece = self.remove_piece(&mv.origin).unwrap();
             piece.move_counter += 1;
+
             self.put_piece(piece, &mv.destination);
         }
 
@@ -843,6 +844,32 @@ fn piece_movements(
     });
     
     Ok(movements)
+}
+
+fn pawn_promotion(piece: &mut Piece, user_move: &MoveType) -> Option<()> {
+    if piece.piece_type == PieceType::Pawn {
+        let MoveType::PieceMove(notation) = user_move else { unreachable!() };
+
+        if white && line == 7 {
+            let promotion_piece: PieceType =
+                notation.promotion.clone().unwrap();
+
+            Some(())
+        }
+        else if black && line == 0 {
+            let promotion_piece: PieceType =
+                notation.promotion.clone().unwrap();
+
+            Some(())
+        }
+        else {
+            None;
+        }
+
+    }
+    else {
+        None
+    }
 }
 
 fn get_piece_position(
@@ -970,8 +997,9 @@ fn parse_chess_notation(
     let dest_line = line_to_usize(&caps["dest_line"]).unwrap();
     let origin_file = file_to_usize(&caps["origin_file"]);
     let origin_line = line_to_usize(&caps["origin_line"]);
+    let promotion = pawn_promotion_piece(&caps["promotion"]);
 
-    let result = ChessNotation::new(piece_type, dest_file, dest_line, origin_file, origin_line, None);
+    let result = ChessNotation::new(piece_type, dest_file, dest_line, origin_file, origin_line, promotion);
 
     Ok(MoveType::PieceMove(result))
 }
@@ -988,6 +1016,15 @@ fn file_to_usize(file: &str) -> Option<usize> {
 fn line_to_usize(line: &str) -> Option<usize> {
     if let Some(value) = line.chars().nth(0) {
         Some(value as usize - 49)
+    }
+    else {
+        None
+    }
+}
+
+fn pawn_promotion_piece(line: &str) -> Option<PieceType> {
+    if let Some(symbol) = line.chars().nth(0) {
+        Some(PieceType::from_symbol(&String::from(symbol)))
     }
     else {
         None
