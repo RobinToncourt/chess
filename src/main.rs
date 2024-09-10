@@ -13,7 +13,6 @@ struct Piece {
     piece_type: PieceType,
     color: Color,
     move_counter: usize,
-
 }
 
 // Constants.
@@ -728,7 +727,7 @@ impl Board {
         for mv in pieces_movement {
             let mut piece = self.remove_piece(&mv.origin).unwrap();
             piece.move_counter += 1;
-
+            pawn_promotion(&mut piece, user_move)?;
             self.put_piece(piece, &mv.destination);
         }
 
@@ -846,29 +845,27 @@ fn piece_movements(
     Ok(movements)
 }
 
-fn pawn_promotion(piece: &mut Piece, user_move: &MoveType) -> Option<()> {
+fn pawn_promotion(
+    piece: &mut Piece, user_move: &MoveType
+) -> Result<bool, ChessError> {
     if piece.piece_type == PieceType::Pawn {
         let MoveType::PieceMove(notation) = user_move else { unreachable!() };
 
-        if white && line == 7 {
-            let promotion_piece: PieceType =
-                notation.promotion.clone().unwrap();
-
-            Some(())
-        }
-        else if black && line == 0 {
-            let promotion_piece: PieceType =
-                notation.promotion.clone().unwrap();
-
-            Some(())
+        if notation.dest.1 == 0 || notation.dest.1 == 7 {
+            let Some(promotion_piece) = notation.promotion.clone() else {
+                return Err(ChessError::MissingPawnPromotion);
+            };
+            
+            piece.piece_type = promotion_piece;
+            
+            Ok(true)
         }
         else {
-            None;
+            Ok(false)
         }
-
     }
     else {
-        None
+        Ok(false)
     }
 }
 
@@ -975,6 +972,7 @@ enum ChessError {
     InvalidChessNotationError,
     AmbiguousMovement,
     NoPieceCanReachDestination,
+    MissingPawnPromotion,
 }
 
 fn parse_chess_notation(
@@ -1043,7 +1041,12 @@ Bxa6 xa6
 0-0 d5
 c3 d4
 cxd4 Qd7
-Kh1 Kd8";
+Kh1 Kd8
+b4 xb4
+a3 xa3
+Bb2 xb2
+Ne5 xa1Q
+Nc3 Qd1";
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -1052,7 +1055,7 @@ fn main() {
         replay(&args[1]);
     }
     else {
-        example(PLAYS_1);
+        example(PLAYS_2);
     }
 }
 
@@ -1186,7 +1189,6 @@ mod test_chess {
         assert!(!is_in_board(&outside));
     }
 }
-
 
 
 
