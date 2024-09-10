@@ -925,7 +925,7 @@ fn get_symbol(line: usize, file: usize, piece: &Option<Piece>) -> String {
     }
 }
 
-const CHESS_NOTATION_STR_REGEX: &str = r"(?<piece>K|Q|R|B|N|P?)(?<origin_file>[a-h]?)(?<origin_line>[1-8]?)x?(?<dest_file>[a-h])(?<dest_line>[1-8])(?<promotion>K|Q|R|B|N|P?)";
+const CHESS_NOTATION_STR_REGEX: &str = r"(?<piece>K|Q|R|B|N|P?)(?<origin_file>[a-h]?)(?<origin_line>[1-8]?)x?(?<dest_file>[a-h])(?<dest_line>[1-8])=?(?<promotion>K|Q|R|B|N|P?)";
 
 const KINGSIDE_CASTLING_STR_REGEX: &str = "0-0";
 const QUEENSIDE_CASTLING_STR_REGEX: &str = "0-0-0";
