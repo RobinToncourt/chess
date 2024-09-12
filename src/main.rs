@@ -137,14 +137,6 @@ fn king_destinations(
     result
 }
 
-fn can_kingside_castling() -> bool {
-    todo!()
-}
-
-fn can_queenside_castling() -> bool {
-    todo!()
-}
-
 fn queen_destinations(
     pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>
 ) -> Vec<Pos> {
@@ -716,18 +708,42 @@ impl Board {
 
     fn user_move(&mut self, user_move: &MoveType) -> Result<(), ChessError> {
         let pieces_movement: Vec<Movement> = match user_move {
-            MoveType::KingSideCastling =>
-                kingside_castling_movements(&self.playing),
-            MoveType::QueenSideCastling =>
-                queenside_castling_movements(&self.playing),
+            MoveType::KingSideCastling => {
+                if can_kingside_castling(
+                    &self.playing,
+                    &self.get_pieces(None, Some(&Color::invert(&self.playing)))
+                ) {
+                    kingside_castling_movements(&self.playing)
+                }
+                else {
+                    return Err(ChessError::CantCastling);
+                }
+            }
+            MoveType::QueenSideCastling => {
+                if can_queenside_castling(
+                    &self.playing,
+                    &self.get_pieces(None, Some(&Color::invert(&self.playing)))
+                ) {
+                    queenside_castling_movements(&self.playing)
+                }
+                else {
+                    return Err(ChessError::CantCastling);
+                }
+            }
             MoveType::PieceMove(chess_notation) =>
                 piece_movements(&self, chess_notation)?,
         };
 
         for mv in pieces_movement {
             let mut piece = self.remove_piece(&mv.origin).unwrap();
+            match pawn_promotion(&mut piece, user_move) {
+                Ok(_) => {},
+                Err(error) => {
+                    self.put_piece(piece, &mv.origin);
+                    return Err(error);
+                },
+            }
             piece.move_counter += 1;
-            pawn_promotion(&mut piece, user_move)?;
             self.put_piece(piece, &mv.destination);
         }
 
@@ -769,6 +785,96 @@ impl Board {
         println!(" +------------------------+");
         println!("   a  b  c  d  e  f  g  h  ");
     }
+}
+
+fn can_kingside_castling(
+    color: &Color, pieces: &HashMap<Pos, &Piece>,
+) -> bool {
+    // Check white.
+    if *color == Color::White &&
+        pieces.get(&Pos(4, 0)).is_some() &&
+        **pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING &&
+        pieces.get(&Pos(5, 0)).is_none() &&
+        pieces.get(&Pos(6, 0)).is_none() &&
+        pieces.get(&Pos(7, 0)).is_some() &&
+        **pieces.get(&Pos(7, 0)).unwrap() == Piece::WHITE_ROOK &&
+        is_position_attacked(&Pos(4, 0), &pieces) &&
+        is_position_attacked(&Pos(5, 0), &pieces) &&
+        is_position_attacked(&Pos(6, 0), &pieces) &&
+        is_position_attacked(&Pos(7, 0), &pieces) {
+        
+        true
+    }
+    // Check black.
+    else if *color == Color::Black &&
+        pieces.get(&Pos(4, 7)).is_some() &&
+        **pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING &&
+        pieces.get(&Pos(5, 7)).is_none() &&
+        pieces.get(&Pos(6, 7)).is_none() &&
+        pieces.get(&Pos(7, 7)).is_some() &&
+        **pieces.get(&Pos(7, 7)).unwrap() == Piece::BLACK_ROOK &&
+        is_position_attacked(&Pos(4, 7), &pieces) &&
+        is_position_attacked(&Pos(5, 7), &pieces) &&
+        is_position_attacked(&Pos(6, 7), &pieces) && 
+        is_position_attacked(&Pos(7, 7), &pieces) {
+        
+        true
+    }
+    else {
+        false
+    }
+}
+
+fn can_queenside_castling(
+    color: &Color,  pieces: &HashMap<Pos, &Piece>
+) -> bool {
+    // Check white.
+    if *color == Color::White &&
+        pieces.get(&Pos(4, 0)).is_some() &&
+        **pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING &&
+        pieces.get(&Pos(3, 0)).is_none() &&
+        pieces.get(&Pos(2, 0)).is_none() &&
+        pieces.get(&Pos(1, 0)).is_none() &&
+        pieces.get(&Pos(0, 0)).is_some() &&
+        **pieces.get(&Pos(0, 0)).unwrap() == Piece::WHITE_ROOK &&
+        is_position_attacked(&Pos(4, 0), &pieces) &&
+        is_position_attacked(&Pos(3, 0), &pieces) &&
+        is_position_attacked(&Pos(2, 0), &pieces) &&
+        is_position_attacked(&Pos(1, 0), &pieces) &&
+        is_position_attacked(&Pos(0, 0), &pieces) {
+        
+        true
+    }
+    // Check black.
+    else if *color == Color::Black &&
+        pieces.get(&Pos(4, 7)).is_some() &&
+        **pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING &&
+        pieces.get(&Pos(3, 7)).is_none() &&
+        pieces.get(&Pos(2, 7)).is_none() &&
+        pieces.get(&Pos(1, 7)).is_none() &&
+        pieces.get(&Pos(0, 7)).is_some() &&
+        **pieces.get(&Pos(0, 7)).unwrap() == Piece::BLACK_ROOK &&
+        is_position_attacked(&Pos(4, 7), &pieces) &&
+        is_position_attacked(&Pos(3, 7), &pieces) &&
+        is_position_attacked(&Pos(2, 7), &pieces) && 
+        is_position_attacked(&Pos(1, 7), &pieces) &&
+        is_position_attacked(&Pos(0, 7), &pieces) {
+        
+        true
+    }
+    else {
+        false
+    }
+}
+
+fn is_position_attacked(pos: &Pos, pieces: &HashMap<Pos, &Piece>) -> bool {
+    for (piece_pos, piece) in pieces {
+        if piece.get_destinations(piece_pos, pieces).contains(pos) {
+            return true;
+        }
+    }
+    
+    false
 }
 
 struct Movement {
@@ -973,6 +1079,7 @@ enum ChessError {
     AmbiguousMovement,
     NoPieceCanReachDestination,
     MissingPawnPromotion,
+    CantCastling,
 }
 
 fn parse_chess_notation(
@@ -1041,12 +1148,20 @@ Bxa6 xa6
 0-0 d5
 c3 d4
 cxd4 Qd7
-Kh1 Kd8
+Kh1 h6
 b4 xb4
 a3 xa3
 Bb2 xb2
 Ne5 xa1Q
-Nc3 Qd1";
+Nc3 Qd1
+d5 a5
+Rxd1 c5
+Kg1 Nf6
+Kf1 e6
+Ke2 Be7
+Kd3 0-0-0";
+
+const QUEENSIDE_CASTLING: &str = "";
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -1187,6 +1302,19 @@ mod test_chess {
         assert!(is_in_board(&bottom_right));
 
         assert!(!is_in_board(&outside));
+    }
+    
+    #[test]
+    fn test_pieces_equality() {
+        let white_king = Piece::WHITE_KING;
+        
+        let white_king_2 = Piece {
+            color: Color::White,
+            piece_type: PieceType::King,
+            move_counter: 0,
+        };
+        
+        assert!(white_king == white_king_2);
     }
 }
 
