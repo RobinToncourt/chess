@@ -711,7 +711,9 @@ impl Board {
             MoveType::KingSideCastling => {
                 if can_kingside_castling(
                     &self.playing,
-                    &self.get_pieces(None, Some(&Color::invert(&self.playing)))
+                    &self.get_pieces(None, Some(&Color::White)),
+                    &self.get_pieces(None, Some(&Color::Black)),
+                    &self.get_pieces(None, None)
                 ) {
                     kingside_castling_movements(&self.playing)
                 }
@@ -722,7 +724,9 @@ impl Board {
             MoveType::QueenSideCastling => {
                 if can_queenside_castling(
                     &self.playing,
-                    &self.get_pieces(None, Some(&Color::invert(&self.playing)))
+                    &self.get_pieces(None, Some(&Color::White)),
+                    &self.get_pieces(None, Some(&Color::Black)),
+                    &self.get_pieces(None, None)
                 ) {
                     queenside_castling_movements(&self.playing)
                 }
@@ -788,35 +792,38 @@ impl Board {
 }
 
 fn can_kingside_castling(
-    color: &Color, pieces: &HashMap<Pos, &Piece>,
+    color: &Color,
+    white_pieces: &HashMap<Pos, &Piece>,
+    black_pieces: &HashMap<Pos, &Piece>,
+    all_pieces: &HashMap<Pos, &Piece>
 ) -> bool {
     // Check white.
     if *color == Color::White &&
-        pieces.get(&Pos(4, 0)).is_some() &&
-        **pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING &&
-        pieces.get(&Pos(5, 0)).is_none() &&
-        pieces.get(&Pos(6, 0)).is_none() &&
-        pieces.get(&Pos(7, 0)).is_some() &&
-        **pieces.get(&Pos(7, 0)).unwrap() == Piece::WHITE_ROOK &&
-        is_position_attacked(&Pos(4, 0), &pieces) &&
-        is_position_attacked(&Pos(5, 0), &pieces) &&
-        is_position_attacked(&Pos(6, 0), &pieces) &&
-        is_position_attacked(&Pos(7, 0), &pieces) {
+        white_pieces.get(&Pos(4, 0)).is_some() &&
+        **white_pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING &&
+        white_pieces.get(&Pos(5, 0)).is_none() &&
+        white_pieces.get(&Pos(6, 0)).is_none() &&
+        white_pieces.get(&Pos(7, 0)).is_some() &&
+        **white_pieces.get(&Pos(7, 0)).unwrap() == Piece::WHITE_ROOK &&
+        !is_position_attacked(&Pos(4, 0), &Color::Black, &all_pieces) &&
+        !is_position_attacked(&Pos(5, 0), &Color::Black, &all_pieces) &&
+        !is_position_attacked(&Pos(6, 0), &Color::Black, &all_pieces) &&
+        !is_position_attacked(&Pos(7, 0), &Color::Black, &all_pieces) {
         
         true
     }
     // Check black.
     else if *color == Color::Black &&
-        pieces.get(&Pos(4, 7)).is_some() &&
-        **pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING &&
-        pieces.get(&Pos(5, 7)).is_none() &&
-        pieces.get(&Pos(6, 7)).is_none() &&
-        pieces.get(&Pos(7, 7)).is_some() &&
-        **pieces.get(&Pos(7, 7)).unwrap() == Piece::BLACK_ROOK &&
-        is_position_attacked(&Pos(4, 7), &pieces) &&
-        is_position_attacked(&Pos(5, 7), &pieces) &&
-        is_position_attacked(&Pos(6, 7), &pieces) && 
-        is_position_attacked(&Pos(7, 7), &pieces) {
+        black_pieces.get(&Pos(4, 7)).is_some() &&
+        **black_pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING &&
+        black_pieces.get(&Pos(5, 7)).is_none() &&
+        black_pieces.get(&Pos(6, 7)).is_none() &&
+        black_pieces.get(&Pos(7, 7)).is_some() &&
+        **black_pieces.get(&Pos(7, 7)).unwrap() == Piece::BLACK_ROOK &&
+        !is_position_attacked(&Pos(4, 7), &Color::White, &all_pieces) &&
+        !is_position_attacked(&Pos(5, 7), &Color::White, &all_pieces) &&
+        !is_position_attacked(&Pos(6, 7), &Color::White, &all_pieces) &&
+        !is_position_attacked(&Pos(7, 7), &Color::White, &all_pieces) {
         
         true
     }
@@ -826,39 +833,42 @@ fn can_kingside_castling(
 }
 
 fn can_queenside_castling(
-    color: &Color,  pieces: &HashMap<Pos, &Piece>
+    color: &Color,
+    white_pieces: &HashMap<Pos, &Piece>,
+    black_pieces: &HashMap<Pos, &Piece>,
+    all_pieces: &HashMap<Pos, &Piece>
 ) -> bool {
     // Check white.
     if *color == Color::White &&
-        pieces.get(&Pos(4, 0)).is_some() &&
-        **pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING &&
-        pieces.get(&Pos(3, 0)).is_none() &&
-        pieces.get(&Pos(2, 0)).is_none() &&
-        pieces.get(&Pos(1, 0)).is_none() &&
-        pieces.get(&Pos(0, 0)).is_some() &&
-        **pieces.get(&Pos(0, 0)).unwrap() == Piece::WHITE_ROOK &&
-        is_position_attacked(&Pos(4, 0), &pieces) &&
-        is_position_attacked(&Pos(3, 0), &pieces) &&
-        is_position_attacked(&Pos(2, 0), &pieces) &&
-        is_position_attacked(&Pos(1, 0), &pieces) &&
-        is_position_attacked(&Pos(0, 0), &pieces) {
+        white_pieces.get(&Pos(4, 0)).is_some() &&
+        **white_pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING &&
+        white_pieces.get(&Pos(3, 0)).is_none() &&
+        white_pieces.get(&Pos(2, 0)).is_none() &&
+        white_pieces.get(&Pos(1, 0)).is_none() &&
+        white_pieces.get(&Pos(0, 0)).is_some() &&
+        **white_pieces.get(&Pos(0, 0)).unwrap() == Piece::WHITE_ROOK &&
+        !is_position_attacked(&Pos(4, 0), &Color::Black, &all_pieces) &&
+        !is_position_attacked(&Pos(3, 0), &Color::Black, &all_pieces) &&
+        !is_position_attacked(&Pos(2, 0), &Color::Black, &all_pieces) &&
+        !is_position_attacked(&Pos(1, 0), &Color::Black, &all_pieces) &&
+        !is_position_attacked(&Pos(0, 0), &Color::Black, &all_pieces) {
         
         true
     }
     // Check black.
     else if *color == Color::Black &&
-        pieces.get(&Pos(4, 7)).is_some() &&
-        **pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING &&
-        pieces.get(&Pos(3, 7)).is_none() &&
-        pieces.get(&Pos(2, 7)).is_none() &&
-        pieces.get(&Pos(1, 7)).is_none() &&
-        pieces.get(&Pos(0, 7)).is_some() &&
-        **pieces.get(&Pos(0, 7)).unwrap() == Piece::BLACK_ROOK &&
-        is_position_attacked(&Pos(4, 7), &pieces) &&
-        is_position_attacked(&Pos(3, 7), &pieces) &&
-        is_position_attacked(&Pos(2, 7), &pieces) && 
-        is_position_attacked(&Pos(1, 7), &pieces) &&
-        is_position_attacked(&Pos(0, 7), &pieces) {
+        black_pieces.get(&Pos(4, 7)).is_some() &&
+        **black_pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING &&
+        black_pieces.get(&Pos(3, 7)).is_none() &&
+        black_pieces.get(&Pos(2, 7)).is_none() &&
+        black_pieces.get(&Pos(1, 7)).is_none() &&
+        black_pieces.get(&Pos(0, 7)).is_some() &&
+        **black_pieces.get(&Pos(0, 7)).unwrap() == Piece::BLACK_ROOK &&
+        !is_position_attacked(&Pos(4, 7), &Color::White, &all_pieces) &&
+        !is_position_attacked(&Pos(3, 7), &Color::White, &all_pieces) &&
+        !is_position_attacked(&Pos(2, 7), &Color::White, &all_pieces) &&
+        !is_position_attacked(&Pos(1, 7), &Color::White, &all_pieces) &&
+        !is_position_attacked(&Pos(0, 7), &Color::White, &all_pieces) {
         
         true
     }
@@ -867,9 +877,9 @@ fn can_queenside_castling(
     }
 }
 
-fn is_position_attacked(pos: &Pos, pieces: &HashMap<Pos, &Piece>) -> bool {
+fn is_position_attacked(pos: &Pos, attack_color: &Color, pieces: &HashMap<Pos, &Piece>) -> bool {
     for (piece_pos, piece) in pieces {
-        if piece.get_destinations(piece_pos, pieces).contains(pos) {
+        if piece.get_destinations(piece_pos, pieces).contains(pos) && piece.color == *attack_color {
             return true;
         }
     }
@@ -1161,6 +1171,16 @@ Kf1 e6
 Ke2 Be7
 Kd3 0-0-0";
 
+const PLAYS_3: &str = "e4 Nc6
+d4 b6
+Nf3 Ba6
+Nc3 e6
+Bf4 Qg5
+Bc4 f6
+Qd2 Nge7
+Qe2 g6
+Qd2 Bh6";
+
 const QUEENSIDE_CASTLING: &str = "";
 
 fn main() {
@@ -1169,12 +1189,15 @@ fn main() {
     let mut board = Board::new();
     board.print();
 
+    replay(&mut board, PLAYS_3);
+
     let stdin = std::io::stdin();
     let mut buffer = String::new();
 
     loop {
         buffer.clear();
 
+        println!("{:?}", board.playing);
         match stdin.read_line(&mut buffer) {
             Ok(_) => {},
             Err(_) => {
@@ -1183,14 +1206,13 @@ fn main() {
             },
         }
 
-        println!("{buffer:?}");
-
-        match buffer.as_str() {
-            "help\n" => help(),
-            "exit\n" => break,
+        let buf_no_nl = &buffer.as_str()[..buffer.len()-1];
+        match buf_no_nl {
+            "help" => help(),
+            "exit" => break,
             _ => {
-                let Ok(chess_notation) = parse_chess_notation(&buffer) else {
-                    println!("Invalid chess notation: {buffer}");
+                let Ok(chess_notation) = parse_chess_notation(&buf_no_nl) else {
+                    println!("Invalid chess notation: {buf_no_nl}");
                     continue;
                 };
 
@@ -1206,16 +1228,11 @@ fn main() {
 }
 
 fn help() {
-
+    println!("This game uses the official notation to move pieces.");
 }
 
-fn example(play: &str) {
-    println!("Replaying a chess game.");
-
-    let mut board = Board::new();
-    board.print();
-
-    for line in play.lines() {
+fn replay(board: &mut Board, replay: &str) {
+    for line in replay.lines() {
         let mut line_split = line.split_whitespace();
         let white = line_split.next().unwrap();
 
@@ -1242,44 +1259,6 @@ fn example(play: &str) {
             if res.is_err() {
                 println!("{res:?}");
             }
-            board.print();
-        }
-    }
-}
-
-fn replay(replay_file: &str) {
-    println!("Replaying a chess game.");
-    println!("Opening replay file {}.", replay_file);
-
-    let Ok(replay) = fs::read_to_string(replay_file) else {
-        println!("{}", format!("No such file: {replay_file}"));
-        return;
-    };
-
-    let mut board = Board::new();
-    board.print();
-
-    for line in replay.lines() {
-        let mut line_split = line.split_whitespace();
-        let white = line_split.next().unwrap();
-
-        let Ok(chess_notation) = parse_chess_notation(white) else {
-            println!("Invalid chess notation: {white}.");
-            return;
-        };
-
-        let _ = board.user_move(&chess_notation);
-        println!("{white}");
-        board.print();
-
-        if let Some(black) = line_split.next() {
-            let Ok(chess_notation) = parse_chess_notation(black) else {
-                println!("Invalid chess notation: {black}.");
-                return;
-            };
-
-            let _ = board.user_move(&chess_notation);
-            println!("{black}");
             board.print();
         }
     }
