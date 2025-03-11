@@ -1164,14 +1164,49 @@ Kd3 0-0-0";
 const QUEENSIDE_CASTLING: &str = "";
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let _args: Vec<String> = env::args().collect();
 
-    if args.len() > 1 {
-        replay(&args[1]);
+    let mut board = Board::new();
+    board.print();
+
+    let stdin = std::io::stdin();
+    let mut buffer = String::new();
+
+    loop {
+        buffer.clear();
+
+        match stdin.read_line(&mut buffer) {
+            Ok(_) => {},
+            Err(_) => {
+                println!("Error while reading the input, try again.");
+                continue;
+            },
+        }
+
+        println!("{buffer:?}");
+
+        match buffer.as_str() {
+            "help\n" => help(),
+            "exit\n" => break,
+            _ => {
+                let Ok(chess_notation) = parse_chess_notation(&buffer) else {
+                    println!("Invalid chess notation: {buffer}");
+                    continue;
+                };
+
+                let res = board.user_move(&chess_notation);
+                if res.is_err() {
+                    println!("{res:?}");
+                }
+            },
+        }
+
+        board.print();
     }
-    else {
-        example(PLAYS_2);
-    }
+}
+
+fn help() {
+
 }
 
 fn example(play: &str) {
