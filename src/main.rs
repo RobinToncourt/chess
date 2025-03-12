@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use std::env;
-use std::fs;
 use std::cmp;
 use std::fmt;
 use lazy_static::lazy_static;
@@ -1184,12 +1183,22 @@ Qd2 Bh6";
 const QUEENSIDE_CASTLING: &str = "";
 
 fn main() {
-    let _args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     let mut board = Board::new();
-    board.print();
 
-    replay(&mut board, PLAYS_3);
+    if args.len() == 2 {
+        if let Ok(replay_file) = open_replay(&args[1]) {
+            replay(&mut board, &replay_file);
+        } else {
+            println!("No such file '{}'.", args[1]);
+        }
+    } else if args.len() > 2 {
+        println!("Too much arguments.");
+        return;
+    }
+
+    board.print();
 
     let stdin = std::io::stdin();
     let mut buffer = String::new();
@@ -1231,6 +1240,18 @@ fn help() {
     println!("This game uses the official notation to move pieces.");
 }
 
+use std::fs::File;
+use std::io::Read;
+use std::io::BufReader;
+
+fn open_replay(filepath: &str) -> std::io::Result<String> {
+    let file = File::open(filepath)?;
+    let mut buf_reader = BufReader::new(file);
+    let mut contents = String::new();
+    buf_reader.read_to_string(&mut contents)?;
+    Ok(contents)
+}
+
 fn replay(board: &mut Board, replay: &str) {
     for line in replay.lines() {
         let mut line_split = line.split_whitespace();
@@ -1262,37 +1283,6 @@ fn replay(board: &mut Board, replay: &str) {
             board.print();
         }
     }
-}
-
-fn mark_pawn_destinations() {
-    let mut board = Board::new_empty();
-
-    let bq = Piece::BLACK_QUEEN;
-    let bq_pos = Pos(3, 5);
-    board.put_piece(bq, &bq_pos);
-
-    let wk = Piece::WHITE_KING;
-    let wk_pos = Pos(5, 5);
-    board.put_piece(wk, &wk_pos);
-
-    let wq = Piece::WHITE_QUEEN;
-    let wq_pos = Pos(3, 3);
-    board.put_piece(wq, &wq_pos);
-
-    let bk = Piece::BLACK_KING;
-    let bk_pos = Pos(5, 3);
-    board.put_piece(bk, &bk_pos);
-
-    let pieces = board.get_pieces(None, None);
-
-    let pawn = Piece::BLACK_PAWN;
-    let pawn_pos = Pos(4, 4);
-    let destinations = pawn.get_destinations(&pawn_pos, &pieces);
-
-    board.put_piece(pawn, &pawn_pos);
-    board.mark_destinations(&destinations);
-
-    board.print();
 }
 
 #[cfg(test)]
