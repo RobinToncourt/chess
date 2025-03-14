@@ -752,6 +752,8 @@ impl Board {
 
         self.playing = Color::invert(&self.playing);
         
+        self.move_list.push(user_move.clone());
+
         Ok(())
     }
 
@@ -1050,14 +1052,14 @@ lazy_static! {
         Regex::new(CHESS_NOTATION_STR_REGEX).unwrap();
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum MoveType {
     KingSideCastling,
     QueenSideCastling,
     PieceMove(ChessNotation),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ChessNotation {
     piece_type: PieceType,
     dest: Pos,
@@ -1186,10 +1188,11 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     let mut board = Board::new();
+    let mut moves = Vec::<String>::new();
 
     if args.len() == 2 {
         if let Ok(replay_file) = open_replay(&args[1]) {
-            replay(&mut board, &replay_file);
+            replay(&mut board, &mut moves, &replay_file);
         } else {
             println!("No such file '{}'.", args[1]);
         }
@@ -1215,24 +1218,38 @@ fn main() {
             },
         }
 
-        let buf_no_nl = &buffer.as_str()[..buffer.len()-1];
-        match buf_no_nl {
+        let input: Vec<&str> = buffer.trim().split_whitespace().collect();
+
+        match input[0] {
             "help" => help(),
             "exit" => break,
+            "moves" => {
+                println!("{:#?}", moves);
+            }
+            "save" => {
+                if let Some(filepath) = input.get(1) {
+                    if save(&moves, filepath).is_err() {
+                        println!("Error while writing to '{filepath}'.");
+                    }
+                } else {
+                    println!("Pass a filepath.");
+                }
+            },
             _ => {
-                let Ok(chess_notation) = parse_chess_notation(&buf_no_nl) else {
-                    println!("Invalid chess notation: {buf_no_nl}");
+                let Ok(chess_notation) = parse_chess_notation(input[0]) else {
+                    println!("Invalid chess notation: {}", input[0]);
                     continue;
                 };
 
                 let res = board.user_move(&chess_notation);
                 if res.is_err() {
                     println!("{res:?}");
+                } else {
+                    moves.push(input[0].to_string());
                 }
+                board.print();
             },
         }
-
-        board.print();
     }
 }
 
@@ -1252,7 +1269,7 @@ fn open_replay(filepath: &str) -> std::io::Result<String> {
     Ok(contents)
 }
 
-fn replay(board: &mut Board, replay: &str) {
+fn replay(board: &mut Board, moves: &mut Vec<String>, replay: &str) {
     for line in replay.lines() {
         let mut line_split = line.split_whitespace();
         let white = line_split.next().unwrap();
@@ -1266,6 +1283,8 @@ fn replay(board: &mut Board, replay: &str) {
         println!("{white}");
         if res.is_err() {
             println!("{res:?}");
+        } else {
+            moves.push(white.to_string());
         }
         board.print();
 
@@ -1279,10 +1298,25 @@ fn replay(board: &mut Board, replay: &str) {
             println!("{black}");
             if res.is_err() {
                 println!("{res:?}");
+            } else {
+                    moves.push(black.to_string());
             }
             board.print();
         }
     }
+}
+
+use std::io::Write;
+
+fn save(moves: &[String], filepath: &str) -> std::io::Result<()> {
+    let mut file = File::create(filepath)?;
+    for i in (0..moves.len()).step_by(2) {
+        write!(file, "{} ", moves[i])?;
+        if let Some(black) = moves.get(i+1) {
+            write!(file, "{}\n", black)?;
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

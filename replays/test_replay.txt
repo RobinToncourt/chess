@@ -1,0 +1,9 @@
+e4 Nc6
+d4 b6
+Nf3 Ba6
+Nc3 e6
+Bf4 Qg5
+Bc4 f6
+Qd2 Nge7
+Qe2 g6
+Qd2 Bh6
