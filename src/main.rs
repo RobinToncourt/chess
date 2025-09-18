@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
-use std::env;
 use std::cmp::{self, Ordering};
-use std::fmt;
 use std::collections::HashMap;
+use std::env;
+use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
 use std::sync::{Arc, LazyLock, Mutex};
@@ -20,21 +20,73 @@ struct Piece {
 }
 // Constants.
 impl Piece {
-	const WHITE_KING: Piece = Piece { piece_type: PieceType::King, color: Color::White, move_counter: 0 };
-	const WHITE_QUEEN: Piece = Piece { piece_type: PieceType::Queen, color: Color::White, move_counter: 0 };
-	const WHITE_ROOK: Piece = Piece { piece_type: PieceType::Rook, color: Color::White, move_counter: 0 };
-	const WHITE_BISHOP: Piece = Piece { piece_type: PieceType::Bishop, color: Color::White, move_counter: 0 };
-	const WHITE_KNIGHT: Piece = Piece { piece_type: PieceType::Knight, color: Color::White, move_counter: 0 };
-	const WHITE_PAWN: Piece = Piece { piece_type: PieceType::Pawn, color: Color::White, move_counter: 0 };
+	const WHITE_KING: Piece = Piece {
+		piece_type: PieceType::King,
+		color: Color::White,
+		move_counter: 0,
+	};
+	const WHITE_QUEEN: Piece = Piece {
+		piece_type: PieceType::Queen,
+		color: Color::White,
+		move_counter: 0,
+	};
+	const WHITE_ROOK: Piece = Piece {
+		piece_type: PieceType::Rook,
+		color: Color::White,
+		move_counter: 0,
+	};
+	const WHITE_BISHOP: Piece = Piece {
+		piece_type: PieceType::Bishop,
+		color: Color::White,
+		move_counter: 0,
+	};
+	const WHITE_KNIGHT: Piece = Piece {
+		piece_type: PieceType::Knight,
+		color: Color::White,
+		move_counter: 0,
+	};
+	const WHITE_PAWN: Piece = Piece {
+		piece_type: PieceType::Pawn,
+		color: Color::White,
+		move_counter: 0,
+	};
 
-	const BLACK_KING: Piece = Piece { piece_type: PieceType::King, color: Color::Black, move_counter: 0 };
-	const BLACK_QUEEN: Piece = Piece { piece_type: PieceType::Queen, color: Color::Black, move_counter: 0 };
-	const BLACK_ROOK: Piece = Piece { piece_type: PieceType::Rook, color: Color::Black, move_counter: 0 };
-	const BLACK_BISHOP: Piece = Piece { piece_type: PieceType::Bishop, color: Color::Black, move_counter: 0 };
-	const BLACK_KNIGHT: Piece = Piece { piece_type: PieceType::Knight, color: Color::Black, move_counter: 0 };
-	const BLACK_PAWN: Piece = Piece { piece_type: PieceType::Pawn, color: Color::Black, move_counter: 0 };
+	const BLACK_KING: Piece = Piece {
+		piece_type: PieceType::King,
+		color: Color::Black,
+		move_counter: 0,
+	};
+	const BLACK_QUEEN: Piece = Piece {
+		piece_type: PieceType::Queen,
+		color: Color::Black,
+		move_counter: 0,
+	};
+	const BLACK_ROOK: Piece = Piece {
+		piece_type: PieceType::Rook,
+		color: Color::Black,
+		move_counter: 0,
+	};
+	const BLACK_BISHOP: Piece = Piece {
+		piece_type: PieceType::Bishop,
+		color: Color::Black,
+		move_counter: 0,
+	};
+	const BLACK_KNIGHT: Piece = Piece {
+		piece_type: PieceType::Knight,
+		color: Color::Black,
+		move_counter: 0,
+	};
+	const BLACK_PAWN: Piece = Piece {
+		piece_type: PieceType::Pawn,
+		color: Color::Black,
+		move_counter: 0,
+	};
 
-	const MARK: Piece = Piece { piece_type: PieceType::Mark, color: Color::Mark, move_counter: 0 };
+	const MARK: Piece = Piece {
+		piece_type: PieceType::Mark,
+		color: Color::Mark,
+		move_counter: 0,
+	};
 }
 // Functions.
 impl Piece {
@@ -57,33 +109,15 @@ impl Piece {
 		en_passant: Option<&Pos>,
 	) -> Vec<Pos> {
 		match self.piece_type {
-			PieceType::King => {
-				king_destinations(pos, &self.color, pieces)
-			},
-			PieceType::Queen => {
-				queen_destinations(pos, &self.color, pieces)
-			},
-			PieceType::Rook => {
-				rook_destinations(pos, &self.color, pieces)
-			},
-			PieceType::Bishop => {
-				bishop_destinations(pos, &self.color, pieces)
-			},
-			PieceType::Knight => {
-				knight_destinations(pos, &self.color, pieces)
-			},
+			PieceType::King => king_destinations(pos, &self.color, pieces),
+			PieceType::Queen => queen_destinations(pos, &self.color, pieces),
+			PieceType::Rook => rook_destinations(pos, &self.color, pieces),
+			PieceType::Bishop => bishop_destinations(pos, &self.color, pieces),
+			PieceType::Knight => knight_destinations(pos, &self.color, pieces),
 			PieceType::Pawn => {
-				pawn_destinations(
-					self.move_counter,
-					pos,
-					&self.color,
-					pieces,
-					en_passant,
-				)
-			},
-			PieceType::Mark => {
-				Vec::new()
-			},
+				pawn_destinations(self.move_counter, pos, &self.color, pieces, en_passant)
+			}
+			PieceType::Mark => Vec::new(),
 		}
 	}
 }
@@ -95,7 +129,7 @@ struct DestinationsParams<'a> {
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
-struct Pos (usize, usize);
+struct Pos(usize, usize);
 
 impl Pos {
 	fn new(file: usize, line: usize) -> Option<Self> {
@@ -111,15 +145,13 @@ impl Pos {
 	}
 }
 
-fn king_destinations(
-	pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>
-) -> Vec<Pos> {
+fn king_destinations(pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>) -> Vec<Pos> {
 	let mut result: Vec<Pos> = Vec::new();
 
 	let min_file = pos.0.saturating_sub(1);
-	let max_file = cmp::min(7, pos.0+1);
+	let max_file = cmp::min(7, pos.0 + 1);
 	let min_line = pos.1.saturating_sub(1);
-	let max_line = cmp::min(7, pos.1+1);
+	let max_line = cmp::min(7, pos.1 + 1);
 
 	for i in min_file..=max_file {
 		for j in min_line..=max_line {
@@ -132,8 +164,7 @@ fn king_destinations(
 				if piece.color != *color {
 					result.push(square_pos);
 				}
-			}
-			else {
+			} else {
 				result.push(square_pos);
 			}
 		}
@@ -142,9 +173,7 @@ fn king_destinations(
 	result
 }
 
-fn queen_destinations(
-	pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>
-) -> Vec<Pos> {
+fn queen_destinations(pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>) -> Vec<Pos> {
 	let mut result: Vec<Pos> = Vec::new();
 
 	result.append(&mut rook_destinations(pos, color, pieces));
@@ -153,9 +182,7 @@ fn queen_destinations(
 	result
 }
 
-fn rook_destinations(
-	pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>
-) -> Vec<Pos> {
+fn rook_destinations(pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>) -> Vec<Pos> {
 	let mut result: Vec<Pos> = Vec::new();
 
 	// Horizontal, pos to 0.
@@ -173,7 +200,7 @@ fn rook_destinations(
 	}
 
 	// Horizontal, pos to 8.
-	for i in pos.0+1..8 {
+	for i in pos.0 + 1..8 {
 		let square_pos = Pos(i, pos.1);
 		if let Some(piece) = pieces.get(&square_pos) {
 			if piece.color != *color {
@@ -199,7 +226,7 @@ fn rook_destinations(
 		result.push(square_pos);
 	}
 
-	for i in pos.1+1..8 {
+	for i in pos.1 + 1..8 {
 		let square_pos = Pos(pos.0, i);
 		if let Some(piece) = pieces.get(&square_pos) {
 			if piece.color != *color {
@@ -215,9 +242,7 @@ fn rook_destinations(
 	result
 }
 
-fn bishop_destinations(
-	pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>
-) -> Vec<Pos> {
+fn bishop_destinations(pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>) -> Vec<Pos> {
 	let mut result: Vec<Pos> = Vec::new();
 
 	// To top right.
@@ -240,8 +265,7 @@ fn bishop_destinations(
 
 	// To bottom left.
 	let mut i = 1;
-	while let (Some(file), Some(line)) =
-		(pos.0.checked_sub(i), pos.1.checked_sub(i)) {
+	while let (Some(file), Some(line)) = (pos.0.checked_sub(i), pos.1.checked_sub(i)) {
 		if let Some(piece) = pieces.get(&Pos(file, line)) {
 			if piece.color != *color {
 				result.push(Pos(file, line));
@@ -297,9 +321,7 @@ fn bishop_destinations(
 	result
 }
 
-fn knight_destinations(
-	pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>
-) -> Vec<Pos> {
+fn knight_destinations(pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>) -> Vec<Pos> {
 	let mut result: Vec<Pos> = Vec::new();
 
 	let file = pos.0;
@@ -307,112 +329,104 @@ fn knight_destinations(
 
 	// 2 up, 1 left.
 	if line + 2 < 8 && file > 0 {
-		let pos = Pos(file-1, line+2);
+		let pos = Pos(file - 1, line + 2);
 
 		if let Some(piece) = pieces.get(&pos) {
 			if piece.color != *color {
 				result.push(pos);
 			}
-		}
-		else {
+		} else {
 			result.push(pos);
 		}
 	}
 
 	// 2 up, 1 right.
-	if line + 2 < 8 && file+1 < 8 {
-		let pos = Pos(file+1, line+2);
+	if line + 2 < 8 && file + 1 < 8 {
+		let pos = Pos(file + 1, line + 2);
 
 		if let Some(piece) = pieces.get(&pos) {
 			if piece.color != *color {
 				result.push(pos);
 			}
-		}
-		else {
+		} else {
 			result.push(pos);
 		}
 	}
 
 	// 2 left, 1 up.
-	if file > 1 && line+1 < 8 {
-		let pos = Pos(file-2, line+1);
+	if file > 1 && line + 1 < 8 {
+		let pos = Pos(file - 2, line + 1);
 
 		if let Some(piece) = pieces.get(&pos) {
 			if piece.color != *color {
 				result.push(pos);
 			}
-		}
-		else {
+		} else {
 			result.push(pos);
 		}
 	}
 
 	// 2 left, 1 down.
 	if file > 1 && line > 0 {
-		let pos = Pos(file-2, line-1);
+		let pos = Pos(file - 2, line - 1);
 
 		if let Some(piece) = pieces.get(&pos) {
 			if piece.color != *color {
 				result.push(pos);
 			}
-		}
-		else {
+		} else {
 			result.push(pos);
 		}
 	}
 
 	// 2 bottom, 1 left
 	if file > 0 && line > 1 {
-		let pos = Pos(file-1, line-2);
+		let pos = Pos(file - 1, line - 2);
 
 		if let Some(piece) = pieces.get(&pos) {
 			if piece.color != *color {
 				result.push(pos);
 			}
-		}
-		else {
+		} else {
 			result.push(pos);
 		}
 	}
 
 	// 2 bottom, 1 right.
-	if file+1 < 8 && line > 1 {
-		let pos = Pos(file+1, line-2);
+	if file + 1 < 8 && line > 1 {
+		let pos = Pos(file + 1, line - 2);
 
 		if let Some(piece) = pieces.get(&pos) {
 			if piece.color != *color {
 				result.push(pos);
 			}
-		}
-		else {
+		} else {
 			result.push(pos);
 		}
 	}
 
 	// 2 right, 1 bottom.
 	if file < 6 && line > 0 {
-		let pos = Pos(file+2, line-1);
+		let pos = Pos(file + 2, line - 1);
 
 		if let Some(piece) = pieces.get(&pos) {
 			if piece.color != *color {
 				result.push(pos);
 			}
-		}
-		else {
+		} else {
 			result.push(pos);
 		}
 	}
 
 	// 2 right, 1 up.
 	if file < 7 && line < 7 {
-		let pos = Pos(file+2, line+1);
+		let pos = Pos(file + 2, line + 1);
 
 		if let Some(piece) = pieces.get(&pos) {
 			if piece.color != *color {
 				result.push(pos);
 			}
-		}
-		else {
+		} else {
 			result.push(pos);
 		}
 	}
@@ -442,18 +456,18 @@ fn white_pawn_destinations(
 ) -> Vec<Pos> {
 	let mut result: Vec<Pos> = Vec::new();
 
-	let square_above = Pos(pos.0, pos.1+1);
+	let square_above = Pos(pos.0, pos.1 + 1);
 	if pieces.get(&square_above).is_none() {
 		result.push(square_above);
 
-		let square_above_above = Pos(pos.0, pos.1+2);
+		let square_above_above = Pos(pos.0, pos.1 + 2);
 		if move_counter == 0 && pieces.get(&square_above_above).is_none() {
 			result.push(square_above_above);
 		}
 	}
 
 	if pos.0 > 0 {
-		let square_top_left = Pos(pos.0-1, pos.1+1);
+		let square_top_left = Pos(pos.0 - 1, pos.1 + 1);
 		if let Some(piece) = pieces.get(&square_top_left) {
 			if piece.color != Color::White {
 				result.push(square_top_left);
@@ -462,7 +476,7 @@ fn white_pawn_destinations(
 	}
 
 	if pos.0 < 7 {
-		let square_top_right = Pos(pos.0+1, pos.1+1);
+		let square_top_right = Pos(pos.0 + 1, pos.1 + 1);
 		if let Some(piece) = pieces.get(&square_top_right) {
 			if piece.color != Color::White {
 				result.push(square_top_right);
@@ -487,18 +501,18 @@ fn black_pawn_destinations(
 ) -> Vec<Pos> {
 	let mut result: Vec<Pos> = Vec::new();
 
-	let square_above = Pos(pos.0, pos.1-1);
+	let square_above = Pos(pos.0, pos.1 - 1);
 	if pieces.get(&square_above).is_none() {
 		result.push(square_above);
 
-		let square_above_above = Pos(pos.0, pos.1-2);
+		let square_above_above = Pos(pos.0, pos.1 - 2);
 		if move_counter == 0 && pieces.get(&square_above_above).is_none() {
 			result.push(square_above_above);
 		}
 	}
 
 	if pos.0 > 0 {
-		let square_top_left = Pos(pos.0-1, pos.1-1);
+		let square_top_left = Pos(pos.0 - 1, pos.1 - 1);
 		if let Some(piece) = pieces.get(&square_top_left) {
 			if piece.color != Color::Black {
 				result.push(square_top_left);
@@ -507,7 +521,7 @@ fn black_pawn_destinations(
 	}
 
 	if pos.0 < 7 {
-		let square_top_right = Pos(pos.0+1, pos.1-1);
+		let square_top_right = Pos(pos.0 + 1, pos.1 - 1);
 		if let Some(piece) = pieces.get(&square_top_right) {
 			if piece.color != Color::Black {
 				result.push(square_top_right);
@@ -599,6 +613,7 @@ impl Color {
 	}
 }
 
+#[derive(Clone)]
 struct Board {
 	grid: Vec<Vec<Option<Piece>>>,
 	playing: Color,
@@ -691,13 +706,14 @@ impl Board {
 	fn get_square_color(line: usize, file: usize) -> String {
 		if (line + file) % 2 == 1 {
 			"   ".to_owned()
-		}
-		else {
+		} else {
 			":::".to_owned()
 		}
 	}
 	fn get_pieces(
-		&self, piece_type: Option<&PieceType>, color: Option<&Color>,
+		&self,
+		piece_type: Option<&PieceType>,
+		color: Option<&Color>,
 	) -> HashMap<Pos, &Piece> {
 		let mut result: HashMap<Pos, &Piece> = HashMap::new();
 
@@ -722,39 +738,30 @@ impl Board {
 	fn user_move(&mut self, user_move: &MoveType) -> Result<(), ChessError> {
 		let pieces_movement: Vec<Movement> = match user_move {
 			MoveType::KingSideCastling => {
-				if can_kingside_castling(
-					&self.playing,
-					&self.get_pieces(None, None)
-				) {
+				if can_kingside_castling(&self.playing, &self.get_pieces(None, None)) {
 					kingside_castling_movements(&self.playing)
-				}
-				else {
+				} else {
 					return Err(ChessError::CantCastling);
 				}
 			}
 			MoveType::QueenSideCastling => {
-				if can_queenside_castling(
-					&self.playing,
-					&self.get_pieces(None, None)
-				) {
+				if can_queenside_castling(&self.playing, &self.get_pieces(None, None)) {
 					queenside_castling_movements(&self.playing)
-				}
-				else {
+				} else {
 					return Err(ChessError::CantCastling);
 				}
 			}
-			MoveType::PieceMove(chess_notation) =>
-				piece_movements(self, chess_notation)?,
+			MoveType::PieceMove(chess_notation) => piece_movements(self, chess_notation)?,
 		};
 
 		for mv in pieces_movement {
 			let mut piece = self.remove_piece(&mv.origin).unwrap();
 			match pawn_promotion(&mut piece, user_move) {
-				Ok(_) => {},
+				Ok(_) => {}
 				Err(error) => {
 					self.put_piece(piece, &mv.origin);
 					return Err(error);
-				},
+				}
 			}
 			piece.move_counter += 1;
 			self.put_piece(piece, &mv.destination);
@@ -765,6 +772,11 @@ impl Board {
 		self.move_list.push(user_move.clone());
 
 		Ok(())
+	}
+	fn create_future(&self, user_move: &MoveType) -> Result<Self, ChessError> {
+		let mut future = self.clone();
+		future.user_move(user_move)?;
+		Ok(future)
 	}
 	fn mark_destinations(&mut self, pos: &Vec<Pos>) {
 		let mark_piece = Piece::MARK;
@@ -784,7 +796,7 @@ impl Board {
 		println!(" +------------------------+");
 
 		for line in (0..8).rev() {
-			print!("{}|", line+1);
+			print!("{}|", line + 1);
 
 			for file in 0..8 {
 				print!("{}", get_symbol(line, file, self.grid[line][file].as_ref()));
@@ -798,9 +810,7 @@ impl Board {
 	}
 }
 
-fn get_pawn_en_passant_case_pos(
-	user_move: &MoveType, playing: &Color,
-) -> Option<Pos> {
+fn get_pawn_en_passant_case_pos(user_move: &MoveType, playing: &Color) -> Option<Pos> {
 	// Check if pawn and move by two from starting pos.
 	// Pos = case that the pawn jumped.
 	match user_move {
@@ -816,91 +826,87 @@ fn get_pawn_en_passant_case_pos(
 	}
 }
 
-fn can_kingside_castling(
-	color: &Color,
-	all_pieces: &HashMap<Pos, &Piece>
-) -> bool {
+fn can_kingside_castling(color: &Color, all_pieces: &HashMap<Pos, &Piece>) -> bool {
 	// Check white.
-	if *color == Color::White &&
-		all_pieces.get(&Pos(4, 0)).is_some() &&
-		**all_pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING &&
-		all_pieces.get(&Pos(5, 0)).is_none() &&
-		all_pieces.get(&Pos(6, 0)).is_none() &&
-		all_pieces.get(&Pos(7, 0)).is_some() &&
-		**all_pieces.get(&Pos(7, 0)).unwrap() == Piece::WHITE_ROOK &&
-		!is_position_attacked(&Pos(4, 0), &Color::Black, all_pieces) &&
-		!is_position_attacked(&Pos(5, 0), &Color::Black, all_pieces) &&
-		!is_position_attacked(&Pos(6, 0), &Color::Black, all_pieces) &&
-		!is_position_attacked(&Pos(7, 0), &Color::Black, all_pieces) {
-
+	if *color == Color::White
+		&& all_pieces.get(&Pos(4, 0)).is_some()
+		&& **all_pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING
+		&& all_pieces.get(&Pos(5, 0)).is_none()
+		&& all_pieces.get(&Pos(6, 0)).is_none()
+		&& all_pieces.get(&Pos(7, 0)).is_some()
+		&& **all_pieces.get(&Pos(7, 0)).unwrap() == Piece::WHITE_ROOK
+		&& !is_position_attacked(&Pos(4, 0), &Color::Black, all_pieces)
+		&& !is_position_attacked(&Pos(5, 0), &Color::Black, all_pieces)
+		&& !is_position_attacked(&Pos(6, 0), &Color::Black, all_pieces)
+		&& !is_position_attacked(&Pos(7, 0), &Color::Black, all_pieces)
+	{
 		true
 	}
 	// Check black.
-	else if *color == Color::Black &&
-		all_pieces.get(&Pos(4, 7)).is_some() &&
-		**all_pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING &&
-		all_pieces.get(&Pos(5, 7)).is_none() &&
-		all_pieces.get(&Pos(6, 7)).is_none() &&
-		all_pieces.get(&Pos(7, 7)).is_some() &&
-		**all_pieces.get(&Pos(7, 7)).unwrap() == Piece::BLACK_ROOK &&
-		!is_position_attacked(&Pos(4, 7), &Color::White, all_pieces) &&
-		!is_position_attacked(&Pos(5, 7), &Color::White, all_pieces) &&
-		!is_position_attacked(&Pos(6, 7), &Color::White, all_pieces) &&
-		!is_position_attacked(&Pos(7, 7), &Color::White, all_pieces) {
-
+	else if *color == Color::Black
+		&& all_pieces.get(&Pos(4, 7)).is_some()
+		&& **all_pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING
+		&& all_pieces.get(&Pos(5, 7)).is_none()
+		&& all_pieces.get(&Pos(6, 7)).is_none()
+		&& all_pieces.get(&Pos(7, 7)).is_some()
+		&& **all_pieces.get(&Pos(7, 7)).unwrap() == Piece::BLACK_ROOK
+		&& !is_position_attacked(&Pos(4, 7), &Color::White, all_pieces)
+		&& !is_position_attacked(&Pos(5, 7), &Color::White, all_pieces)
+		&& !is_position_attacked(&Pos(6, 7), &Color::White, all_pieces)
+		&& !is_position_attacked(&Pos(7, 7), &Color::White, all_pieces)
+	{
 		true
-	}
-	else {
+	} else {
 		false
 	}
 }
 
-fn can_queenside_castling(
-	color: &Color,
-	all_pieces: &HashMap<Pos, &Piece>
-) -> bool {
+fn can_queenside_castling(color: &Color, all_pieces: &HashMap<Pos, &Piece>) -> bool {
 	// Check white.
-	if *color == Color::White &&
-		all_pieces.get(&Pos(4, 0)).is_some() &&
-		**all_pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING &&
-		all_pieces.get(&Pos(3, 0)).is_none() &&
-		all_pieces.get(&Pos(2, 0)).is_none() &&
-		all_pieces.get(&Pos(1, 0)).is_none() &&
-		all_pieces.get(&Pos(0, 0)).is_some() &&
-		**all_pieces.get(&Pos(0, 0)).unwrap() == Piece::WHITE_ROOK &&
-		!is_position_attacked(&Pos(4, 0), &Color::Black, all_pieces) &&
-		!is_position_attacked(&Pos(3, 0), &Color::Black, all_pieces) &&
-		!is_position_attacked(&Pos(2, 0), &Color::Black, all_pieces) &&
-		!is_position_attacked(&Pos(1, 0), &Color::Black, all_pieces) &&
-		!is_position_attacked(&Pos(0, 0), &Color::Black, all_pieces) {
-
+	if *color == Color::White
+		&& all_pieces.get(&Pos(4, 0)).is_some()
+		&& **all_pieces.get(&Pos(4, 0)).unwrap() == Piece::WHITE_KING
+		&& all_pieces.get(&Pos(3, 0)).is_none()
+		&& all_pieces.get(&Pos(2, 0)).is_none()
+		&& all_pieces.get(&Pos(1, 0)).is_none()
+		&& all_pieces.get(&Pos(0, 0)).is_some()
+		&& **all_pieces.get(&Pos(0, 0)).unwrap() == Piece::WHITE_ROOK
+		&& !is_position_attacked(&Pos(4, 0), &Color::Black, all_pieces)
+		&& !is_position_attacked(&Pos(3, 0), &Color::Black, all_pieces)
+		&& !is_position_attacked(&Pos(2, 0), &Color::Black, all_pieces)
+		&& !is_position_attacked(&Pos(1, 0), &Color::Black, all_pieces)
+		&& !is_position_attacked(&Pos(0, 0), &Color::Black, all_pieces)
+	{
 		true
 	}
 	// Check black.
-	else if *color == Color::Black &&
-		all_pieces.get(&Pos(4, 7)).is_some() &&
-		**all_pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING &&
-		all_pieces.get(&Pos(3, 7)).is_none() &&
-		all_pieces.get(&Pos(2, 7)).is_none() &&
-		all_pieces.get(&Pos(1, 7)).is_none() &&
-		all_pieces.get(&Pos(0, 7)).is_some() &&
-		**all_pieces.get(&Pos(0, 7)).unwrap() == Piece::BLACK_ROOK &&
-		!is_position_attacked(&Pos(4, 7), &Color::White, all_pieces) &&
-		!is_position_attacked(&Pos(3, 7), &Color::White, all_pieces) &&
-		!is_position_attacked(&Pos(2, 7), &Color::White, all_pieces) &&
-		!is_position_attacked(&Pos(1, 7), &Color::White, all_pieces) &&
-		!is_position_attacked(&Pos(0, 7), &Color::White, all_pieces) {
-
+	else if *color == Color::Black
+		&& all_pieces.get(&Pos(4, 7)).is_some()
+		&& **all_pieces.get(&Pos(4, 7)).unwrap() == Piece::BLACK_KING
+		&& all_pieces.get(&Pos(3, 7)).is_none()
+		&& all_pieces.get(&Pos(2, 7)).is_none()
+		&& all_pieces.get(&Pos(1, 7)).is_none()
+		&& all_pieces.get(&Pos(0, 7)).is_some()
+		&& **all_pieces.get(&Pos(0, 7)).unwrap() == Piece::BLACK_ROOK
+		&& !is_position_attacked(&Pos(4, 7), &Color::White, all_pieces)
+		&& !is_position_attacked(&Pos(3, 7), &Color::White, all_pieces)
+		&& !is_position_attacked(&Pos(2, 7), &Color::White, all_pieces)
+		&& !is_position_attacked(&Pos(1, 7), &Color::White, all_pieces)
+		&& !is_position_attacked(&Pos(0, 7), &Color::White, all_pieces)
+	{
 		true
-	}
-	else {
+	} else {
 		false
 	}
 }
 
 fn is_position_attacked(pos: &Pos, attack_color: &Color, pieces: &HashMap<Pos, &Piece>) -> bool {
 	for (piece_pos, piece) in pieces {
-		if piece.get_destinations(piece_pos, pieces, None).contains(pos) && piece.color == *attack_color {
+		if piece
+			.get_destinations(piece_pos, pieces, None)
+			.contains(pos)
+			&& piece.color == *attack_color
+		{
 			return true;
 		}
 	}
@@ -929,13 +935,13 @@ fn kingside_castling_movements(color: &Color) -> Vec<Movement> {
 				Movement::from_tuples((7, 0), (5, 0)),
 				Movement::from_tuples((4, 0), (6, 0)),
 			]
-		},
+		}
 		Color::Black => {
 			vec![
 				Movement::from_tuples((7, 7), (5, 7)),
 				Movement::from_tuples((4, 7), (6, 7)),
 			]
-		},
+		}
 		Color::Mark => panic!("Invalid color."),
 	}
 }
@@ -947,35 +953,33 @@ fn queenside_castling_movements(color: &Color) -> Vec<Movement> {
 				Movement::from_tuples((0, 0), (3, 0)),
 				Movement::from_tuples((4, 0), (2, 0)),
 			]
-		},
+		}
 		Color::Black => {
 			vec![
 				Movement::from_tuples((0, 7), (3, 7)),
 				Movement::from_tuples((4, 7), (2, 7)),
 			]
-		},
+		}
 		Color::Mark => panic!("Invalid color."),
 	}
 }
 
 fn piece_movements(
-	board: &Board, chess_notation: &ChessNotation
+	board: &Board,
+	chess_notation: &ChessNotation,
 ) -> Result<Vec<Movement>, ChessError> {
 	let mut movements: Vec<Movement> = Vec::new();
 
 	let pieces = board.get_pieces(None, None);
 
-	let filtered_pieces = board.get_pieces(
-		Some(&chess_notation.piece_type),
-		Some(&board.playing),
-	);
+	let filtered_pieces = board.get_pieces(Some(&chess_notation.piece_type), Some(&board.playing));
 
 	let origin_pos = get_piece_position(
-			chess_notation,
-			&filtered_pieces,
-			&pieces,
-			board.en_passant.as_ref(),
-		)?;
+		chess_notation,
+		&filtered_pieces,
+		&pieces,
+		board.en_passant.as_ref(),
+	)?;
 
 	movements.push(Movement {
 		origin: origin_pos,
@@ -1001,13 +1005,11 @@ fn get_piece_position(
 				if file == pos.0 {
 					result.push(pos.clone());
 				}
-			}
-			else if let Some(line) = chess_notation.origin_line {
+			} else if let Some(line) = chess_notation.origin_line {
 				if line == pos.1 {
 					result.push(pos.clone());
 				}
-			}
-			else {
+			} else {
 				result.push(pos.clone());
 			}
 		}
@@ -1024,11 +1026,11 @@ fn get_piece_position(
 	Ok(result[0].clone())
 }
 
-fn pawn_promotion(
-	piece: &mut Piece, user_move: &MoveType
-) -> Result<bool, ChessError> {
+fn pawn_promotion(piece: &mut Piece, user_move: &MoveType) -> Result<bool, ChessError> {
 	if piece.piece_type == PieceType::Pawn {
-		let MoveType::PieceMove(notation) = user_move else { unreachable!() };
+		let MoveType::PieceMove(notation) = user_move else {
+			unreachable!()
+		};
 
 		if notation.dest.1 == 0 || notation.dest.1 == 7 {
 			let Some(promotion_piece) = notation.promotion.clone() else {
@@ -1038,12 +1040,10 @@ fn pawn_promotion(
 			piece.piece_type = promotion_piece;
 
 			Ok(true)
-		}
-		else {
+		} else {
 			Ok(false)
 		}
-	}
-	else {
+	} else {
 		Ok(false)
 	}
 }
@@ -1061,8 +1061,7 @@ fn destinations_contains_pos(destinations: &Vec<Pos>, pos: &Pos) -> bool {
 fn get_symbol(line: usize, file: usize, piece: Option<&Piece>) -> String {
 	if let Some(piece) = piece {
 		piece.get_symbol()
-	}
-	else {
+	} else {
 		Board::get_square_color(line, file)
 	}
 }
@@ -1072,9 +1071,8 @@ const CHESS_NOTATION_STR_REGEX: &str = r"(?<piece>K|Q|R|B|N|P?)(?<origin_file>[a
 const KINGSIDE_CASTLING_STR_REGEX: &str = "0-0";
 const QUEENSIDE_CASTLING_STR_REGEX: &str = "0-0-0";
 
-static CHESS_NOTATION_REGEX: LazyLock<Arc<Mutex<Regex>>> = LazyLock::new(||{
-	Arc::new(Mutex::new(Regex::new(CHESS_NOTATION_STR_REGEX).unwrap()))
-});
+static CHESS_NOTATION_REGEX: LazyLock<Arc<Mutex<Regex>>> =
+	LazyLock::new(|| Arc::new(Mutex::new(Regex::new(CHESS_NOTATION_STR_REGEX).unwrap())));
 
 #[derive(Debug, Clone)]
 enum MoveType {
@@ -1094,8 +1092,11 @@ struct ChessNotation {
 
 impl ChessNotation {
 	fn new(
-		piece_type: PieceType, dest_file: usize, dest_line: usize,
-		origin_file: Option<usize>, origin_line: Option<usize>,
+		piece_type: PieceType,
+		dest_file: usize,
+		dest_line: usize,
+		origin_file: Option<usize>,
+		origin_line: Option<usize>,
 		promotion: Option<PieceType>,
 	) -> Self {
 		Self {
@@ -1115,11 +1116,10 @@ enum ChessError {
 	NoPieceCanReachDestination,
 	MissingPawnPromotion,
 	CantCastling,
+	KingInCheck,
 }
 
-fn parse_chess_notation(
-	chess_notation: &str
-) -> Result<MoveType, ChessError> {
+fn parse_chess_notation(chess_notation: &str) -> Result<MoveType, ChessError> {
 	if chess_notation.eq(KINGSIDE_CASTLING_STR_REGEX) {
 		return Ok(MoveType::KingSideCastling);
 	}
@@ -1128,8 +1128,12 @@ fn parse_chess_notation(
 		return Ok(MoveType::QueenSideCastling);
 	}
 
-	let Some(caps) = CHESS_NOTATION_REGEX.lock().unwrap().captures(chess_notation) else {
-		return Err(ChessError::InvalidChessNotationError)
+	let Some(caps) = CHESS_NOTATION_REGEX
+		.lock()
+		.unwrap()
+		.captures(chess_notation)
+	else {
+		return Err(ChessError::InvalidChessNotationError);
 	};
 
 	let piece_type = PieceType::from_symbol(&caps["piece"]);
@@ -1139,21 +1143,24 @@ fn parse_chess_notation(
 	let origin_line = line_to_usize(&caps["origin_line"]);
 	let promotion = pawn_promotion_piece(&caps["promotion"]);
 
-	let result = ChessNotation::new(piece_type, dest_file, dest_line, origin_file, origin_line, promotion);
+	let result = ChessNotation::new(
+		piece_type,
+		dest_file,
+		dest_line,
+		origin_file,
+		origin_line,
+		promotion,
+	);
 
 	Ok(MoveType::PieceMove(result))
 }
 
 fn file_to_usize(file: &str) -> Option<usize> {
-	file.chars()
-		.next()
-		.map(|value| value as usize - 97)
+	file.chars().next().map(|value| value as usize - 97)
 }
 
 fn line_to_usize(line: &str) -> Option<usize> {
-	line.chars()
-		.next()
-		.map(|value| value as usize - 49)
+	line.chars().next().map(|value| value as usize - 49)
 }
 
 fn pawn_promotion_piece(line: &str) -> Option<PieceType> {
@@ -1202,6 +1209,9 @@ const QUEENSIDE_CASTLING: &str = "";
 // TODO: add king check verification.
 // TODO: check if the match is finished, check mate.
 // TODO: add future board for previous TODOs.
+// TODO: add function that returns all possible movement for a player.
+// TODO: print board from black side.
+// TODO: modify `is_position_attacked` to account for en passant.
 fn main() {
 	let args: Vec<String> = env::args().collect();
 
@@ -1253,7 +1263,7 @@ fn main() {
 				} else {
 					println!("Pass a filepath.");
 				}
-			},
+			}
 			_ => {
 				let Ok(chess_notation) = parse_chess_notation(input[0]) else {
 					println!("Invalid chess notation: {}", input[0]);
@@ -1267,9 +1277,13 @@ fn main() {
 					moves.push(input[0].to_string());
 				}
 				board.print();
-			},
+			}
 		}
 	}
+}
+
+fn is_king_checkmate(board: &Board, king_to_check_color: &Color) -> bool {
+	todo!()
 }
 
 fn help() {
@@ -1314,7 +1328,7 @@ fn replay(board: &mut Board, moves: &mut Vec<String>, replay: &str) {
 			if res.is_err() {
 				println!("{res:?}");
 			} else {
-					moves.push(black.to_string());
+				moves.push(black.to_string());
 			}
 			board.print();
 		}
@@ -1325,7 +1339,7 @@ fn save(moves: &[String], filepath: &str) -> std::io::Result<()> {
 	let mut file = File::create(filepath)?;
 	for i in (0..moves.len()).step_by(2) {
 		write!(file, "{} ", moves[i])?;
-		if let Some(black) = moves.get(i+1) {
+		if let Some(black) = moves.get(i + 1) {
 			writeln!(file, "{black}")?;
 		}
 	}
@@ -1368,23 +1382,3 @@ mod test_chess {
 		assert!(white_king == white_king_2);
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
