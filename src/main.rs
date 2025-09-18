@@ -121,16 +121,14 @@ impl Piece {
 		}
 	}
 }
-
-struct DestinationsParams<'a> {
-	pos: &'a Pos,
-	color: &'a Color,
-	pieces: &'a HashMap<Pos, &'a Piece>,
+impl fmt::Display for Piece {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{}", self.get_symbol())
+	}
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 struct Pos(usize, usize);
-
 impl Pos {
 	fn new(file: usize, line: usize) -> Option<Self> {
 		if file >= 8 || line >= 8 {
@@ -466,11 +464,20 @@ fn white_pawn_destinations(
 		}
 	}
 
+	// Pos(file, line)
+
 	if pos.0 > 0 {
 		let square_top_left = Pos(pos.0 - 1, pos.1 + 1);
 		if let Some(piece) = pieces.get(&square_top_left) {
 			if piece.color != Color::White {
 				result.push(square_top_left);
+			}
+		}
+		if let Some(en_passant_pos) = en_passant {
+			if en_passant_pos.1 - 1 == pos.1
+				&& en_passant_pos.0 == pos.0 - 1
+			{
+				result.push(en_passant_pos.clone());
 			}
 		}
 	}
@@ -482,11 +489,12 @@ fn white_pawn_destinations(
 				result.push(square_top_right);
 			}
 		}
-	}
-
-	if let Some(en_passant_pos) = en_passant {
-		if en_passant_pos.1 == 3 {
-			result.push(en_passant_pos.clone());
+		if let Some(en_passant_pos) = en_passant {
+			if en_passant_pos.1 - 1 == pos.1
+				&& en_passant_pos.0 == pos.0 + 1
+			{
+				result.push(en_passant_pos.clone());
+			}
 		}
 	}
 
@@ -518,6 +526,13 @@ fn black_pawn_destinations(
 				result.push(square_top_left);
 			}
 		}
+		if let Some(en_passant_pos) = en_passant {
+			if en_passant_pos.1 + 1 == pos.1
+				&& en_passant_pos.0 == pos.0 - 1
+				{
+					result.push(en_passant_pos.clone());
+				}
+		}
 	}
 
 	if pos.0 < 7 {
@@ -527,11 +542,12 @@ fn black_pawn_destinations(
 				result.push(square_top_right);
 			}
 		}
-	}
-
-	if let Some(en_passant_pos) = en_passant {
-		if en_passant_pos.1 == 7 {
-			result.push(en_passant_pos.clone());
+		if let Some(en_passant_pos) = en_passant {
+			if en_passant_pos.1 + 1 == pos.1
+				&& en_passant_pos.0 == pos.0 + 1
+				{
+					result.push(en_passant_pos.clone());
+				}
 		}
 	}
 
@@ -540,11 +556,6 @@ fn black_pawn_destinations(
 
 fn is_in_board(pos: &Pos) -> bool {
 	pos.0 < 8 && pos.1 < 8
-}
-impl fmt::Display for Piece {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{}", self.get_symbol())
-	}
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -773,7 +784,7 @@ impl Board {
 
 		Ok(())
 	}
-	fn create_future(&self, user_move: &MoveType) -> Result<Self, ChessError> {
+	fn create_next(&self, user_move: &MoveType) -> Result<Self, ChessError> {
 		let mut future = self.clone();
 		future.user_move(user_move)?;
 		Ok(future)
@@ -818,8 +829,8 @@ fn get_pawn_en_passant_case_pos(user_move: &MoveType, playing: &Color) -> Option
 		MoveType::PieceMove(chess_notation) => {
 			let Pos(file, line) = chess_notation.dest;
 			match (playing, line) {
-				(Color::White, 4) => Some(Pos(file, 3)),
-				(Color::Black, 5) => Some(Pos(file, 6)),
+				(Color::White, 3) => Some(Pos(file, 2)),
+				(Color::Black, 4) => Some(Pos(file, 5)),
 				_ => None,
 			}
 		}
@@ -1116,7 +1127,9 @@ enum ChessError {
 	NoPieceCanReachDestination,
 	MissingPawnPromotion,
 	CantCastling,
+	PieceIsPinned,
 	KingInCheck,
+	CantMoveKingHere,
 }
 
 fn parse_chess_notation(chess_notation: &str) -> Result<MoveType, ChessError> {
@@ -1211,7 +1224,8 @@ const QUEENSIDE_CASTLING: &str = "";
 // TODO: add future board for previous TODOs.
 // TODO: add function that returns all possible movement for a player.
 // TODO: print board from black side.
-// TODO: modify `is_position_attacked` to account for en passant.
+
+// TODO: refactor the code lessen `Board` struct responsability and pass it to a new struct `Game` that will handle game turn, movement resolution and verify check, checkmate, stalemate and other things. Ultimately the `Board` struct should just contains pieces positions.
 fn main() {
 	let args: Vec<String> = env::args().collect();
 
@@ -1282,7 +1296,83 @@ fn main() {
 	}
 }
 
-fn is_king_checkmate(board: &Board, king_to_check_color: &Color) -> bool {
+fn validate_move(board: &Board, user_move: &MoveType) -> Result<(), ChessError> {
+	// TODO: check move is valid:
+	// if pawn reach last line no missing promotion piece
+
+	match user_move {
+		MoveType::KingSideCastling => {
+			if can_kingside_castling(&board.playing, &board.get_pieces(None, None)) {
+				return Ok(());
+			} else {
+				return Err(ChessError::CantCastling);
+			}
+		}
+		MoveType::QueenSideCastling => {
+			if can_queenside_castling(&board.playing, &board.get_pieces(None, None)) {
+				return Ok(());
+			} else {
+				return Err(ChessError::CantCastling);
+			}
+		}
+		MoveType::PieceMove(chess_notation) => {
+			let movements: Vec<Movement> = piece_movements(board, chess_notation)?;
+			if chess_notation.piece_type == PieceType::Pawn
+				&& board.playing == Color::White
+				&& chess_notation.dest.1 == 7
+				&& chess_notation.promotion.is_none()
+			{
+				return Err(ChessError::MissingPawnPromotion);
+			}
+
+			if chess_notation.piece_type == PieceType::Pawn
+				&& board.playing == Color::Black
+				&& chess_notation.dest.1 == 0
+				&& chess_notation.promotion.is_none()
+			{
+				return Err(ChessError::MissingPawnPromotion);
+			}
+
+			let is_king_in_check_pre_move = is_king_in_check(board, &board.playing);
+
+			let next_board = board.create_next(user_move)?;
+
+			let is_king_in_check_post_move = is_king_in_check(&next_board, &board.playing);
+
+			if !is_king_in_check_pre_move && is_king_in_check_post_move {
+				return Err(ChessError::PieceIsPinned);
+			}
+
+			if is_king_in_check_pre_move && is_king_in_check_post_move {
+				return Err(ChessError::KingInCheck);
+			}
+
+			if chess_notation.piece_type == PieceType::King && is_king_in_check_post_move {
+				return Err(ChessError::CantMoveKingHere);
+			}
+
+			return Ok(());
+		}
+	}
+
+	todo!()
+}
+
+fn is_king_in_check(board: &Board, king_color: &Color) -> bool {
+	let king_pos: Pos = board
+		.get_pieces(Some(&PieceType::King), Some(king_color))
+		.into_iter()
+		.next()
+		.expect("Need one king.")
+		.0;
+	is_position_attacked(
+		&king_pos,
+		&Color::invert(king_color),
+		&board.get_pieces(None, None),
+	)
+}
+
+fn is_king_checkmate(_board: &Board, _king_to_check_color: &Color) -> bool {
 	todo!()
 }
 
