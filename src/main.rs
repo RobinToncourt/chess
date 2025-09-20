@@ -137,10 +137,27 @@ impl Pos {
 
 		Some(Self(file, line))
 	}
-
 	fn eq(&self, other: &Pos) -> bool {
 		self.0 == other.0 && self.1 == other.1
 	}
+	fn get_file_as_char(&self) -> char {
+		(self.0 as u8 + 97) as char
+	}
+	fn above(&self) -> Self {
+		Self(self.0, self.1 + 1)
+	}
+	fn below(&self) -> Self {
+		Self(self.0, self.1 - 1)
+	}
+}
+impl fmt::Display for Pos {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{}{}", self.get_file_as_char(), self.1 + 1)
+	}
+}
+
+fn display_pos_slice(v: &[Pos]) {
+	println!("{}", v.iter().map(|p| p.to_string()).collect::<Vec<String>>().join(", "));
 }
 
 fn king_destinations(pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>) -> Vec<Pos> {
@@ -929,7 +946,6 @@ struct Movement {
 	origin: Pos,
 	destination: Pos,
 }
-
 impl Movement {
 	fn from_tuples(o: (usize, usize), d: (usize, usize)) -> Self {
 		Self {
@@ -937,6 +953,15 @@ impl Movement {
 			destination: Pos(d.0, d.1),
 		}
 	}
+}
+impl fmt::Display for Movement {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{} to {}", self.origin, self.destination)
+	}
+}
+
+fn display_movement_slice(v: &[Movement]) {
+	println!("{}", v.iter().map(|m| m.to_string()).collect::<Vec<String>>().join(", "));
 }
 
 fn kingside_castling_movements(color: &Color) -> Vec<Movement> {
@@ -992,12 +1017,31 @@ fn piece_movements(
 		board.en_passant.as_ref(),
 	)?;
 
+	if let Some(en_passant) = board.en_passant.as_ref() {
+		if chess_notation.piece_type == PieceType::Pawn
+			&& chess_notation.dest == *en_passant
+		{
+			movements.push(Movement {
+				origin: en_passant_pawn_taken_pos(en_passant, &Color::invert(&board.playing)),
+				destination: en_passant.clone(),
+			});
+		}
+	}
+
 	movements.push(Movement {
 		origin: origin_pos,
 		destination: chess_notation.dest.clone(),
 	});
 
 	Ok(movements)
+}
+
+fn en_passant_pawn_taken_pos(en_passant: &Pos, pawn_taken_color: &Color) -> Pos {
+	match pawn_taken_color {
+		Color::White => en_passant.above(),
+		Color::Black => en_passant.below(),
+		Color::Mark => unreachable!(),
+	}
 }
 
 fn get_piece_position(
@@ -1263,6 +1307,10 @@ fn main() {
 
 		let input: Vec<&str> = buffer.split_whitespace().collect();
 
+		if input.is_empty() {
+			continue;
+		}
+
 		match input[0] {
 			"help" => help(),
 			"exit" => break,
@@ -1304,16 +1352,14 @@ fn validate_move(board: &Board, user_move: &MoveType) -> Result<(), ChessError> 
 		MoveType::KingSideCastling => {
 			if can_kingside_castling(&board.playing, &board.get_pieces(None, None)) {
 				return Ok(());
-			} else {
-				return Err(ChessError::CantCastling);
 			}
+			return Err(ChessError::CantCastling);
 		}
 		MoveType::QueenSideCastling => {
 			if can_queenside_castling(&board.playing, &board.get_pieces(None, None)) {
 				return Ok(());
-			} else {
-				return Err(ChessError::CantCastling);
 			}
+			return Err(ChessError::CantCastling);
 		}
 		MoveType::PieceMove(chess_notation) => {
 			let movements: Vec<Movement> = piece_movements(board, chess_notation)?;
