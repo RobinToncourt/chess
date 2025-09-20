@@ -157,7 +157,13 @@ impl fmt::Display for Pos {
 }
 
 fn display_pos_slice(v: &[Pos]) {
-	println!("{}", v.iter().map(|p| p.to_string()).collect::<Vec<String>>().join(", "));
+	println!(
+		"{}",
+		v.iter()
+			.map(std::string::ToString::to_string)
+			.collect::<Vec<String>>()
+			.join(", ")
+	);
 }
 
 fn king_destinations(pos: &Pos, color: &Color, pieces: &HashMap<Pos, &Piece>) -> Vec<Pos> {
@@ -491,9 +497,7 @@ fn white_pawn_destinations(
 			}
 		}
 		if let Some(en_passant_pos) = en_passant {
-			if en_passant_pos.1 - 1 == pos.1
-				&& en_passant_pos.0 == pos.0 - 1
-			{
+			if en_passant_pos.1 - 1 == pos.1 && en_passant_pos.0 == pos.0 - 1 {
 				result.push(en_passant_pos.clone());
 			}
 		}
@@ -507,9 +511,7 @@ fn white_pawn_destinations(
 			}
 		}
 		if let Some(en_passant_pos) = en_passant {
-			if en_passant_pos.1 - 1 == pos.1
-				&& en_passant_pos.0 == pos.0 + 1
-			{
+			if en_passant_pos.1 - 1 == pos.1 && en_passant_pos.0 == pos.0 + 1 {
 				result.push(en_passant_pos.clone());
 			}
 		}
@@ -544,11 +546,9 @@ fn black_pawn_destinations(
 			}
 		}
 		if let Some(en_passant_pos) = en_passant {
-			if en_passant_pos.1 + 1 == pos.1
-				&& en_passant_pos.0 == pos.0 - 1
-				{
-					result.push(en_passant_pos.clone());
-				}
+			if en_passant_pos.1 + 1 == pos.1 && en_passant_pos.0 == pos.0 - 1 {
+				result.push(en_passant_pos.clone());
+			}
 		}
 	}
 
@@ -560,11 +560,9 @@ fn black_pawn_destinations(
 			}
 		}
 		if let Some(en_passant_pos) = en_passant {
-			if en_passant_pos.1 + 1 == pos.1
-				&& en_passant_pos.0 == pos.0 + 1
-				{
-					result.push(en_passant_pos.clone());
-				}
+			if en_passant_pos.1 + 1 == pos.1 && en_passant_pos.0 == pos.0 + 1 {
+				result.push(en_passant_pos.clone());
+			}
 		}
 	}
 
@@ -627,15 +625,15 @@ impl Color {
 	}
 	fn get_opening_symbol(&self) -> String {
 		match self {
-			Color::White => "<".to_owned(),
-			Color::Black => "[".to_owned(),
+			Color::White => "[".to_owned(),
+			Color::Black => "<".to_owned(),
 			Color::Mark => " ".to_string(),
 		}
 	}
 	fn get_closing_symbol(&self) -> String {
 		match self {
-			Color::White => ">".to_owned(),
-			Color::Black => "]".to_owned(),
+			Color::White => "]".to_owned(),
+			Color::Black => ">".to_owned(),
 			Color::Mark => ' '.to_string(),
 		}
 	}
@@ -961,7 +959,13 @@ impl fmt::Display for Movement {
 }
 
 fn display_movement_slice(v: &[Movement]) {
-	println!("{}", v.iter().map(|m| m.to_string()).collect::<Vec<String>>().join(", "));
+	println!(
+		"{}",
+		v.iter()
+			.map(std::string::ToString::to_string)
+			.collect::<Vec<String>>()
+			.join(", ")
+	);
 }
 
 fn kingside_castling_movements(color: &Color) -> Vec<Movement> {
@@ -1018,9 +1022,7 @@ fn piece_movements(
 	)?;
 
 	if let Some(en_passant) = board.en_passant.as_ref() {
-		if chess_notation.piece_type == PieceType::Pawn
-			&& chess_notation.dest == *en_passant
-		{
+		if chess_notation.piece_type == PieceType::Pawn && chess_notation.dest == *en_passant {
 			movements.push(Movement {
 				origin: en_passant_pawn_taken_pos(en_passant, &Color::invert(&board.playing)),
 				destination: en_passant.clone(),
@@ -1166,7 +1168,7 @@ impl ChessNotation {
 
 #[derive(Debug, PartialEq)]
 enum ChessError {
-	InvalidChessNotationError,
+	InvalidChessNotation,
 	AmbiguousMovement,
 	NoPieceCanReachDestination,
 	MissingPawnPromotion,
@@ -1190,7 +1192,7 @@ fn parse_chess_notation(chess_notation: &str) -> Result<MoveType, ChessError> {
 		.unwrap()
 		.captures(chess_notation)
 	else {
-		return Err(ChessError::InvalidChessNotationError);
+		return Err(ChessError::InvalidChessNotation);
 	};
 
 	let piece_type = PieceType::from_symbol(&caps["piece"]);
@@ -1265,11 +1267,10 @@ const QUEENSIDE_CASTLING: &str = "";
 
 // TODO: add king check verification.
 // TODO: check if the match is finished, check mate.
-// TODO: add future board for previous TODOs.
 // TODO: add function that returns all possible movement for a player.
 // TODO: print board from black side.
 
-// TODO: refactor the code lessen `Board` struct responsability and pass it to a new struct `Game` that will handle game turn, movement resolution and verify check, checkmate, stalemate and other things. Ultimately the `Board` struct should just contains pieces positions.
+// TODO: refactor the code to lessen `Board` struct responsability and pass it to a new struct `Game` that will handle game turn, movement resolution and verify check, checkmate, stalemate and other things. Ultimately the `Board` struct should just contains pieces positions.
 fn main() {
 	let args: Vec<String> = env::args().collect();
 
@@ -1317,6 +1318,9 @@ fn main() {
 			"moves" => {
 				println!("{moves:#?}");
 			}
+			"history" => {
+				// TODO: print moves history.
+			}
 			"save" => {
 				if let Some(filepath) = input.get(1) {
 					if save(&moves, filepath).is_err() {
@@ -1332,6 +1336,26 @@ fn main() {
 					continue;
 				};
 
+				if let Err(e) = validate_move(&board, &chess_notation) {
+					match e {
+						ChessError::InvalidChessNotation => println!("Invalid chess notation."),
+						ChessError::AmbiguousMovement => {
+							println!("You need to specify which piece go to this position.")
+						}
+						ChessError::NoPieceCanReachDestination => {
+							println!("No piece can reach destination.")
+						}
+						ChessError::MissingPawnPromotion => {
+							println!("You need to provide pawn promotion piece type.")
+						}
+						ChessError::CantCastling => println!("You can't castling."),
+						ChessError::PieceIsPinned => println!("Your piece is pinned."),
+						ChessError::KingInCheck => println!("Your king is in check."),
+						ChessError::CantMoveKingHere => println!("You can't move your king here."),
+					}
+					continue;
+				}
+
 				let res = board.user_move(&chess_notation);
 				if res.is_err() {
 					println!("{res:?}");
@@ -1345,24 +1369,26 @@ fn main() {
 }
 
 fn validate_move(board: &Board, user_move: &MoveType) -> Result<(), ChessError> {
-	// TODO: check move is valid:
-	// if pawn reach last line no missing promotion piece
-
 	match user_move {
 		MoveType::KingSideCastling => {
 			if can_kingside_castling(&board.playing, &board.get_pieces(None, None)) {
 				return Ok(());
 			}
-			return Err(ChessError::CantCastling);
+			Err(ChessError::CantCastling)
 		}
 		MoveType::QueenSideCastling => {
 			if can_queenside_castling(&board.playing, &board.get_pieces(None, None)) {
 				return Ok(());
 			}
-			return Err(ChessError::CantCastling);
+			Err(ChessError::CantCastling)
 		}
 		MoveType::PieceMove(chess_notation) => {
-			let movements: Vec<Movement> = piece_movements(board, chess_notation)?;
+			// Check that one, and only one, piece can reach destination.
+			let _movements: Vec<Movement> = piece_movements(board, chess_notation)?;
+
+			/*
+			 * Check pawn promotion type.
+			 */
 			if chess_notation.piece_type == PieceType::Pawn
 				&& board.playing == Color::White
 				&& chess_notation.dest.1 == 7
@@ -1386,6 +1412,10 @@ fn validate_move(board: &Board, user_move: &MoveType) -> Result<(), ChessError> 
 			let is_king_in_check_post_move = is_king_in_check(&next_board, &board.playing);
 
 			if !is_king_in_check_pre_move && is_king_in_check_post_move {
+				if chess_notation.piece_type == PieceType::King && is_king_in_check_post_move {
+					return Err(ChessError::CantMoveKingHere);
+				}
+
 				return Err(ChessError::PieceIsPinned);
 			}
 
@@ -1393,15 +1423,9 @@ fn validate_move(board: &Board, user_move: &MoveType) -> Result<(), ChessError> 
 				return Err(ChessError::KingInCheck);
 			}
 
-			if chess_notation.piece_type == PieceType::King && is_king_in_check_post_move {
-				return Err(ChessError::CantMoveKingHere);
-			}
-
-			return Ok(());
+			Ok(())
 		}
 	}
-
-	todo!()
 }
 
 fn is_king_in_check(board: &Board, king_color: &Color) -> bool {
